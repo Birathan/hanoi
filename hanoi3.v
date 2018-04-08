@@ -57,23 +57,24 @@ module hanoi3(
                 defparam VGA.MONOCHROME = "FALSE";
                 defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
                 defparam VGA.BACKGROUND_IMAGE = "black.mif";
-					 
+
 		  wire OneBiggerThanTwo;
-		  wire OneBiggerThanThree;		  
+		  wire OneBiggerThanThree;
 		  wire TwoBiggerThanOne;
 		  wire TwoBiggerThanThree;
 		  wire ThreeBiggerThanOne;
 		  wire ThreeBiggerThanTwo;
-		  
+
+      // bigger then comparators for comparing the size of 2-bit binary numbers
 		  comparator onetwo(piecesizes1[5:4], piecesizes2[5:4], OneBiggerThanTwo);
 		  comparator onethree(piecesizes1[5:4], piecesizes3[5:4], OneBiggerThanThree);
 		  comparator twoone(piecesizes2[5:4], piecesizes1[5:4],TwoBiggerThanOne);
 		  comparator twothree(piecesizes2[5:4], piecesizes3[5:4],TwoBiggerThanThree);
 		  comparator threeone(piecesizes3[5:4], piecesizes1[5:4],ThreeBiggerThanOne);
 		  comparator threetwo(piecesizes3[5:4], piecesizes2[5:4],ThreeBiggerThanTwo);
-		  
+
 		  hex_display ScoreDisplay(movecount, HEX0);
-		  
+
 		  reg [4:0]movecount = 8'b00000;
 		  reg [5:0] state;
 		  reg [5:0] state2;
@@ -82,14 +83,14 @@ module hanoi3(
 	     reg [17:0] draw_counter;
         reg [7:0] bl_1_x, bl_1_y, bl_2_x, bl_2_y, bl_3_x, bl_3_y, bl_wr_x, bl_wr_y, bl_erase_x, bl_erase_y;
         reg [2:0] bl_1_colour, bl_2_colour, bl_3_colour, bl_wr_colour, bl_erase_colour;
-        
-		  
+
+
 		  // NUMBER OF PIECES IN POSITION 1, 2, 3
 		  reg [1:0]piecenum1 = 2'b11;
         reg [1:0]piecenum2 = 2'b00;
         reg [1:0]piecenum3 = 2'b00;
-		  
-		  // LIST OF SIZES FROM TOP TO BOTTOM, FOR EXAMPLE: |01|10|11| means the position has pieces 1, 2, 3 from top to bottom(1 being smallest size, to 3 being largest size)  
+
+		  // LIST OF SIZES FROM TOP TO BOTTOM, FOR EXAMPLE: |01|10|11| means the position has pieces 1, 2, 3 from top to bottom(1 being smallest size, to 3 being largest size)
 		  reg [5:0]piecesizes1 = 6'b011011;
 		  reg [5:0]piecesizes2 = 6'b000000;
 		  reg [5:0]piecesizes3 = 6'b000000;
@@ -98,20 +99,21 @@ module hanoi3(
         reg [1:0]source;
         reg [1:0]destination;
         reg wrong_input = 1'b0;
-		
+
         reg [7:0]x1 = 8'd000;
         reg [7:0]x2 = 8'd50;
         reg [7:0]x3 = 8'd100;
-			
+
         reg [7:0]y1 = 8'd100;
         reg [7:0]y2 = 8'd90;
         reg [7:0]y3 = 8'd80;
-			
+
         assign LEDR[17:16] = source;
         assign LEDR[15:14] = destination;
 		  assign LEDG[5:0] = piecesizes2;
         assign LEDR[5:0] = state;
-	
+
+        //used some ideas from the brick breaker source code to initialize, update and draw the blocks
         localparam
 				INIT_BLOCK_ERASE   = 6'b000000,
 				INIT_BLOCK_WRONG   = 6'b000001,
@@ -136,11 +138,11 @@ module hanoi3(
 
         always@(posedge CLOCK_50)
 		  begin
+          //used these 4 lines from the brick breaker source code
 				   //block_initing = 1'b0;
                colour = 3'b000;
                x = 8'b00000000;
                y = 8'b00000000;
-               //if (SW[0]) state = RESET_BLACK;
 
 					case (state)
                         //START BLOCKS
@@ -163,7 +165,7 @@ module hanoi3(
                               y = y3 + draw_counter[6:5];
 										colour = 3'b000;
                            end
-									
+
 									else begin
 										draw_counter= 8'b00000000;
 										state = INIT_BLOCK_WRONG;
@@ -230,7 +232,7 @@ module hanoi3(
 								START: begin
 									if(SW[0]) state = WAIT_PRESS_SOURCE;
 								end
-								
+
                         WAIT_PRESS_SOURCE: begin
 									if(~KEY[3]||~KEY[2]||~KEY[1])
 									begin
@@ -252,15 +254,15 @@ module hanoi3(
 										if(~KEY[2]) destination = 2'b10;
 										if(~KEY[1]) destination = 2'b11;
 										state = CHECK_INPUT;
-                          end	
+                          end
 								end
-								
+
 								//CHECK VALIDITY OF INPUT AND LOAD VALUES
-                        CHECK_INPUT:begin
+                    CHECK_INPUT:begin
 										wrong_input=1'b0;
 										if(source == destination)
 											wrong_input = 1'b0;
-	
+
 										//CASE 1
 										else if((source == 2'd1) && (destination == 2'd2))
 										begin
@@ -275,7 +277,7 @@ module hanoi3(
 													if(piecenum2 == 2'b10) bl_1_y = y3;
 													state2 = DRAW_BLOCK_1;
 												end
-												
+
 												if(piecesizes1[5:4] == 2'b10)
 												begin
 													bl_2_x = x2;
@@ -292,20 +294,20 @@ module hanoi3(
 													if(piecenum2 == 2'b10) bl_3_y = y3;
 													state2 = DRAW_BLOCK_3;
 												end
-							
+
 												//DESTINATION
 												piecesizes2 = piecesizes2 >> 2;
 												piecesizes2[5:4] = piecesizes1[5:4];
-							
+
 												//SOURCE
 												piecesizes1 = piecesizes1 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum2 = piecenum2 + 1'b1;
-												piecenum1 = piecenum1 - 1'b1;		
+												piecenum1 = piecenum1 - 1'b1;
 											end
 										end
-			   
+
 										//CASE 2
 										else if((source == 2'd1) && (destination == 2'd3))
 										begin
@@ -339,16 +341,16 @@ module hanoi3(
 												//DESTINATION
 												piecesizes3 = piecesizes3 >> 2;
 												piecesizes3[5:4] = piecesizes1[5:4];
-							
+
 												//SOURCE
 												piecesizes1 =piecesizes1 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum3 = piecenum3 + 1'b1;
-												piecenum1 = piecenum1 - 1'b1;		
+												piecenum1 = piecenum1 - 1'b1;
 											end
 										end
-						
+
 										//CASE 3
 										else if((source == 2'd2) && (destination == 2'd1))
 										begin
@@ -382,16 +384,16 @@ module hanoi3(
 												//DESTINATION
 												piecesizes1 = piecesizes1 >> 2;
 												piecesizes1[5:4] = piecesizes2[5:4];
-							
+
 												//SOURCE
 												piecesizes2 = piecesizes2 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum1 = piecenum1 + 1'b1;
-												piecenum2 = piecenum2 - 1'b1;	
+												piecenum2 = piecenum2 - 1'b1;
 											end
 										end
-						
+
 										//CASE 4
 										else if((source == 2'd2) && (destination == 2'd3))
 										begin
@@ -425,16 +427,16 @@ module hanoi3(
 												//DESTINATION
 												piecesizes3 = piecesizes3 >> 2;
 												piecesizes3[5:4] = piecesizes2[5:4];
-							
+
 												//SOURCE
 												piecesizes2 =piecesizes2 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum3 = piecenum3 + 1'b1;
-												piecenum2 = piecenum2 - 1'b1;	
+												piecenum2 = piecenum2 - 1'b1;
 											end
 										end
-						
+
 										//CASE 5
 										else if((source == 2'd3) && (destination == 2'd1))
 										begin
@@ -468,17 +470,17 @@ module hanoi3(
 												//DESTINATION
 												piecesizes1 = piecesizes1 >> 2;
 												piecesizes1[5:4] = piecesizes3[5:4];
-							
+
 												//SOURCE
 												piecesizes3 =piecesizes3 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum1 = piecenum1 + 1'b1;
-												piecenum3 = piecenum3 - 1'b1;	
+												piecenum3 = piecenum3 - 1'b1;
 											end
 										end
-						
-						
+
+
 										//CASE 6
 										else if((source == 2'd3) && (destination == 2'd2))
 										begin
@@ -512,16 +514,16 @@ module hanoi3(
 												//DESTINATION
 												piecesizes2 = piecesizes2 >> 2;
 												piecesizes2[5:4] = piecesizes3[5:4];
-							
+
 												//SOURCE
 												piecesizes3 =piecesizes3 << 2;
-												
+
 												//PIECE NUMBERS
 												piecenum2 = piecenum2 + 1'b1;
-												piecenum3 = piecenum3 - 1'b1;	
+												piecenum3 = piecenum3 - 1'b1;
 											end
 										end
-					
+
 										// NEXT STATE
 										state = UPDATE_WRONG_BLOCK;
                         end
@@ -529,12 +531,12 @@ module hanoi3(
                         // DRAWING GREEN SQUARE IF VALID MOVE, RED OTHERWIZE
                         UPDATE_WRONG_BLOCK: begin
 									if(wrong_input) bl_wr_colour = 3'b100;
-                           else begin 
+                           else begin
 										bl_wr_colour = 3'b010;
 										movecount =  movecount+ 1'b1;
 									end
-									
-									if(piecenum3 == 2'b11) state = INIT_BLOCK_ERASE; 
+
+									if(piecenum3 == 2'b11) state = INIT_BLOCK_ERASE;
 									else state = DRAW_WRONG_BLOCK;
                         end
 
@@ -624,9 +626,9 @@ module hanoi3(
 										state = START;
 									end
                         end
-								
+
 								//BLOCK 3
-								
+
                       DRAW_BLOCK_3: begin
 									if(draw_counter < 6'b100000) begin
                               x = bl_3_x + draw_counter[4:0];
@@ -644,13 +646,14 @@ module hanoi3(
 								end
 					endcase
         end
-		  
+
 endmodule
 
+//code used from lab
 module hex_display(IN, OUT);
     input [3:0] IN;
 	 output reg [6:0] OUT;
-	 
+
 	 always @(*)
 	 begin
 		case(IN[3:0])
@@ -676,12 +679,13 @@ module hex_display(IN, OUT);
 	end
 endmodule
 
-
+// a greater than comparator
+//checks if A is bigger than B
 module comparator(A, B, OUT);
 	input[1:0] A;
 	input[1:0] B;
 	output OUT;
-	
+
 	assign OUT = A[1]&(~B[1])|
 					(
 						(
